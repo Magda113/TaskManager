@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TaskManager.BusinessLogic
 {
-    public enum TaskStatus
+    public enum TaskItemStatus
     {
         ToDo,
         InProgress,

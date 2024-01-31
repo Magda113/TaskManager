@@ -1,19 +1,25 @@
-﻿using Microsoft.VisualBasic;
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.VisualBasic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using TaskManager.BusinessLogic;
-using TaskStatus = TaskManager.BusinessLogic.TaskStatus;
 
 namespace TaskManager
 {
     public class Program
     {
+        private const string ConnectionString = "Persist Security Info=False;Integrated Security=true; TrustServerCertificate=True; Initial Catalog=TaskManager;Server=LAPTOP\\SQLEXPRESS";
+        private static int _createdBy = 1;
+
+        
         private static TaskManagerService _taskManagerService = new TaskManagerService();
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            
             int answer;
             do
             {
@@ -46,7 +52,7 @@ namespace TaskManager
                         {
                             Console.WriteLine("Podaj tę datę");
                             DateTime dueDate = DateTime.Parse(Console.ReadLine());
-                            var task = _taskManagerService.Add(description, dueDate);
+                            var task = await _taskManagerService.AddAsync(description, _createdBy, dueDate);
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Dodano zadanie");
                             Console.ResetColor();
@@ -55,7 +61,7 @@ namespace TaskManager
 
                         if (answer1 == "nie")
                         {
-                            var task = _taskManagerService.Add(description, null);
+                            var task = await _taskManagerService.AddAsync(description, _createdBy, null);
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Dodano zadanie");
                             Console.ResetColor();
@@ -70,7 +76,7 @@ namespace TaskManager
                             Console.WriteLine("Spróbuj jeszcze raz");
                         }
 
-                        if (_taskManagerService.Remove(id))
+                        if (await _taskManagerService.RemoveAsync(id))
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Usunięto zadanie");
@@ -92,7 +98,7 @@ namespace TaskManager
                             Console.WriteLine("Spróbuj jeszcze raz");
                         }
 
-                        var task1 = _taskManagerService.Get(idToShow);
+                        var task1 = await _taskManagerService.GetAsync(idToShow);
                         if (task1 != null)
                         {
                             var sb = new StringBuilder();
@@ -113,7 +119,7 @@ namespace TaskManager
 
                         break;
                     case 4:
-                        var tasks = _taskManagerService.GetAll();
+                        var tasks = await _taskManagerService.GetAllAsync();
                         Console.WriteLine($"Masz {tasks.Length} zadań:");
                         foreach (var task in tasks)
                         {
@@ -127,16 +133,24 @@ namespace TaskManager
                         switch (answer2)
                         {
                             case "ToDo":
-                                var tasksToDo = _taskManagerService.GetAll(TaskStatus.ToDo);
+                                var statuses = string.Join(", ", Enum.GetNames<TaskItemStatus>());
+                                Console.WriteLine($"Podaj status: {statuses}");
+                                TaskItemStatus itemStatus;
+                                while (!Enum.TryParse<TaskItemStatus>(Console.ReadLine(), true, out itemStatus))
+                                {
+                                    Console.WriteLine($"Podaj status: {statuses}");
+                                }
+                                var tasksToDo = await _taskManagerService.GetAllAsync(TaskItemStatus.ToDo);
                                 Console.WriteLine($"Masz {tasksToDo.Length} zadań do zrobienia:");
                                 foreach (var task in tasksToDo)
                                 {
                                     Console.WriteLine(task);
                                 }
+                               
 
                                 break;
                             case "InProgress":
-                                var tasksInProgress = _taskManagerService.GetAll(TaskStatus.InProgress);
+                                var tasksInProgress =await _taskManagerService.GetAllAsync(TaskItemStatus.InProgress);
                                 Console.WriteLine($"Masz {tasksInProgress.Length} zadań w trakcie robienia:");
                                 foreach (var task in tasksInProgress)
                                 {
@@ -145,7 +159,7 @@ namespace TaskManager
 
                                 break;
                             case "Done":
-                                var tasksDone = _taskManagerService.GetAll(TaskStatus.Done);
+                                var tasksDone = await _taskManagerService.GetAllAsync(TaskItemStatus.Done);
                                 Console.WriteLine($"Masz {tasksDone.Length} zadań zakończonych:");
                                 foreach (var task in tasksDone)
                                 {
@@ -177,7 +191,7 @@ namespace TaskManager
                             break;
                         }
 
-                        var tasksToFind = _taskManagerService.GetAll(answer3);
+                        var tasksToFind = await _taskManagerService.GetAllAsync(answer3);
                         Console.WriteLine();
                         Console.WriteLine($"Znaleziono {tasksToFind.Length} zadań:");
                         foreach (var task in tasksToFind)
@@ -190,8 +204,8 @@ namespace TaskManager
                         Console.WriteLine("Podaj numer zadania do zmienienia");
                         var idToChange = int.Parse(Console.ReadLine());
                         Console.WriteLine("Podaj nowy status (ToDo/InProgress/Done:");
-                        var status = Enum.Parse(typeof(TaskStatus), Console.ReadLine(), true);
-                        if (_taskManagerService.ChangeStatus(idToChange, (TaskStatus)status))
+                        var status = Enum.Parse(typeof(TaskItemStatus), Console.ReadLine(), true);
+                        if (await _taskManagerService.ChangeStatusAsync(idToChange, (TaskItemStatus)status))
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Udało się zmienić status");

@@ -5,20 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskManager.BusinessLogic;
-using Task = TaskManager.BusinessLogic.Task;
-using TaskStatus = TaskManager.BusinessLogic.TaskStatus;
 
 namespace TaskManager.Tests
 {
-    public class TaskTests
+    public class TaskItemTests
     {
+        private User _createdBy = new User(1, "test");
+
         [Fact]
         //1.Automatyczna inkrementacja ID: Testuje, czy każde nowo utworzone zadanie otrzymuje unikalny, autoinkrementowany identyfikator.
         public void Should_CreateTask_WithAutoIncrementedId()
         {
             // Arrange
-            var task1 = new Task("test", null);
-            var task2 = new Task("test", null);
+            var task1 = new TaskItem(1, "test", _createdBy, null );
+            var task2 = new TaskItem(2, "test", _createdBy, null);
 
             // Act
            
@@ -32,7 +32,7 @@ namespace TaskManager.Tests
         public void Should_SetCreationDate_WhenCreatingTask()
         {
             //Arrange
-            var task2 = new Task("test", null);
+            var task2 = new TaskItem(2, "test", _createdBy, null);
 
             //Act
             var difference = DateTime.Now - task2.CreationDate;
@@ -46,7 +46,7 @@ namespace TaskManager.Tests
         public void Should_SetDueDate_WhenProvided()
         {
             //Arrange
-            var task3 = new Task("test", DateTime.Now.AddDays(5));
+            var task3 = new TaskItem(3, "test", _createdBy, DateTime.Now.AddDays(5));
             //Act
 
             //Assert
@@ -58,7 +58,7 @@ namespace TaskManager.Tests
         public void Should_SetStatusToTodo_WhenTaskIsCreated()
         {
             //Arrange
-            var task1 = new Task("test", null);
+            var task1 = new TaskItem(1, "test", _createdBy, null);
 
             //Act
 
@@ -72,8 +72,8 @@ namespace TaskManager.Tests
         public void Should_ChangeStatus_ToInProgress_WhenStartIsCalled()
         {
             //Arrange
-            var task = new Task("test", null);
-           
+            var task = new TaskItem(1, "test", _createdBy, null);
+
             //Act
             task.Start();
             //Assert
@@ -85,7 +85,7 @@ namespace TaskManager.Tests
         public void Should_SetStartDate_WhenStartIsCalled()
         {
             //Arrange
-            var task = new Task("test", null);
+            var task = new TaskItem(1, "test", _createdBy, null);
 
             //Act
             task.Start();
@@ -99,8 +99,8 @@ namespace TaskManager.Tests
         public void Should_NotChangeStatus_ToInProgress_IfAlreadyInProgress()
         {
             //Arrange
-            var task = new Task("test", null);
-           
+            var task = new TaskItem(1, "test", _createdBy, null);
+
             //Act
             task.Start();
             bool result = task.Start();
@@ -115,7 +115,7 @@ namespace TaskManager.Tests
         public void Should_ChangeStatus_ToDone_WhenDoneIsCalledAndStatusIsInProgress()
         {
             //Arrange
-            var task = new Task("test", null);
+            var task = new TaskItem(1, "test", _createdBy, null);
 
             //Act
             task.Start();
@@ -131,7 +131,7 @@ namespace TaskManager.Tests
         public void Should_SetDoneDate_WhenDoneIsCalled()
         {
             //Arrange
-            var task = new Task("test", null);
+            var task = new TaskItem(1, "test", _createdBy, null);
 
             //Act
             task.Start();
@@ -147,22 +147,22 @@ namespace TaskManager.Tests
         public void Should_NotChangeStatus_ToDone_IfStatusIsNotInProgress()
         {
             //Arrange
-            var task = new Task("test", null);
+            var task = new TaskItem(1, "test", _createdBy, null);
 
             //Act
             bool result = task.Done();
 
             //Assert
             Assert.False(result);
-            Assert.Equal("ToDo", task.Status.ToString());
+            Assert.Equal(TaskItemStatus.ToDo, task.Status);
         }
-
+        
         [Fact]
         //11.Obliczanie czasu trwania: Testuje obliczanie czasu trwania zadania, które jest w trakcie realizacji.
         public void Should_CalculateDuration_WhenStatusIsInProgress()
         {
             //Arrange
-            var task = new Task("test", null);
+            var task = new TaskItem(1, "test", _createdBy, null);
 
             //Act
             task.Start();
@@ -178,10 +178,10 @@ namespace TaskManager.Tests
         public void Should_ReturnNullDuration_WhenStatusIsTodo()
         {
             //Arrange
-            var task = new Task("test", null);
+            var task = new TaskItem(1, "test", _createdBy, null);
 
             //Act
-            
+
             //Assert
             Assert.Null(task.Duration);
         }

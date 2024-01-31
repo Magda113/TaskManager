@@ -8,8 +8,12 @@ using System.Threading.Tasks;
 
 namespace TaskManager.BusinessLogic
 {
-    public class Task
+    public class TaskItem
     {
+        private User _createdBy;
+        private User? _assignedTo;
+        public User CreatedBy => _createdBy;
+        public User? AssignedTo => _assignedTo;
 
         private static int _id = 1; //Automatycznie zwiększa się przy tworzeniu nowego zadania.
         public int Id { get; }
@@ -30,12 +34,12 @@ namespace TaskManager.BusinessLogic
                 ? (DoneDate ?? DateTime.Now) - StartDate.Value
                 : null; //Czas trwania zadania (różnica między StartDate a obecnym czasem lub DoneDate jeśli zadanie zostało zakończone). Jest to wartość obliczana na żądanie.
 
-        public TaskStatus Status { get; private set; } =
-            TaskStatus.ToDo; //Aktualny status zadania. Wartość wymagana i ustawiana automatycznie przy tworzeniu zadania na wartośćToDo.
+        public TaskItemStatus Status { get; private set; } =
+            TaskItemStatus.ToDo; //Aktualny status zadania. Wartość wymagana i ustawiana automatycznie przy tworzeniu zadania na wartośćToDo.
 
-        public Task(string description, DateTime? dueDate)
+        public TaskItem(string description, DateTime? dueDate)
         {
-            Id = _id++;
+           
             CreationDate = DateTime.Now;
             Description = description;
             DueDate = dueDate;
@@ -44,9 +48,9 @@ namespace TaskManager.BusinessLogic
         //Start() : Rozpoczyna zadanie, zmienia jego status na InProgress i ustawia StartDate oraz usuwa datę DoneDate. Można rozpocząć zadanie tylko wtedy, gdy już nie zostało wcześniej rozpoczęte. Zwraca wartość bool z informacją czy udało się zmienić status.
         public bool Start()
         {
-            if (Status == TaskStatus.ToDo)
+            if (Status == TaskItemStatus.ToDo)
             {
-                Status = TaskStatus.InProgress;
+                Status = TaskItemStatus.InProgress;
                 StartDate = DateTime.Now;
                 DoneDate = null;
                 return true;
@@ -58,9 +62,9 @@ namespace TaskManager.BusinessLogic
 
         public bool Open()
         {
-            if (Status != TaskStatus.ToDo)
+            if (Status != TaskItemStatus.ToDo)
             {
-                Status = TaskStatus.ToDo;
+                Status = TaskItemStatus.ToDo;
                 StartDate = null;
                 DoneDate = null;
                 return true;
@@ -72,9 +76,9 @@ namespace TaskManager.BusinessLogic
 
         public bool Done()
         {
-            if (Status == TaskStatus.InProgress)
+            if (Status == TaskItemStatus.InProgress)
             {
-                Status = TaskStatus.Done;
+                Status = TaskItemStatus.Done;
                 DoneDate = DateTime.Now;
                 return true;
             }
@@ -84,8 +88,25 @@ namespace TaskManager.BusinessLogic
 
         public override string ToString()
         {
-            return $"{Id} - {Description} ({Status})";
+            return $"{Id} - {Description} ({Status}) @{AssignedTo?.Name ?? "nieprzypisane"}";
         }
+        public void AssignTo(User? assignedTo)
+        {
+            _assignedTo = assignedTo;
+        }
+        private TaskItem()
+        {
+        }
+
+        public TaskItem(int id, string description, User createdBy, DateTime? dueDate)
+        {
+            Id = id;
+            Description = description;
+            CreationDate = DateTime.Now;
+            _createdBy = createdBy;
+            DueDate = dueDate;
+        }
+
     }
 
 }
